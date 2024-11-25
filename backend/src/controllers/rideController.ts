@@ -24,6 +24,7 @@ export const estimateRide = async (req: Request, res: Response): Promise<any> =>
         error_description: "Os campos origin e destination não podem ser iguais.",
       });
     }
+
     const customer = await showById(customer_id);
     if (!customer) {
       return res.status(400).send({
@@ -31,6 +32,7 @@ export const estimateRide = async (req: Request, res: Response): Promise<any> =>
         error_description: "Cliente não encontrado.",
       });
     }
+    
     const route = await getEstimateDrivers({ origin, destination });
     if (route === 404) {
       return res.status(404).send({
@@ -38,8 +40,15 @@ export const estimateRide = async (req: Request, res: Response): Promise<any> =>
         error_description: "Não há motoristas disponíveis para essa rota.",
       });
     }
-    return res.status(200).send({ route });
+    if (route === 400) {
+      return res.status(400).send({
+        error_code: "INVALID_DATA",
+        error_description:
+          "Não foi possível calcular a rota com os endereços informados.",
+      });
+    }
+    return res.status(200).send(route);
   } catch (error: any) {
-    res.send({ message: (error as Error).message });
+    res.status(500).send({ message: (error as Error).message });
   }
 };

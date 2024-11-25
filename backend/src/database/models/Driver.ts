@@ -4,7 +4,7 @@ import db from '.'
 class Driver extends Model {
   declare driverId: number;
   declare name: string;
-  declare desciption: string;
+  declare description: string;
   declare vehicle: string;
   declare rating: number;
   declare comment: string;

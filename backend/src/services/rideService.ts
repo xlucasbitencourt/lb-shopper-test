@@ -25,10 +25,45 @@ export const getEstimateDrivers = async (places: {
 }) => {
   try {
     const route = await getEstimateFromGoogle(places);
+    if (!route.routes) return 400;
+
     const { distanceMeters, duration } = route.routes[0];
+    if (!distanceMeters || !duration) return 400;
+
+    const origin = {
+      latitude: route.routes[0].legs[0].startLocation.latLng.latitude,
+      longitude: route.routes[0].legs[0].startLocation.latLng.longitude,
+    };
+
+    const destination = {
+      latitude: route.routes[0].legs[0].endLocation.latLng.latitude,
+      longitude: route.routes[0].legs[0].endLocation.latLng.longitude,
+    };
+
     const drivers = await showDriversAvailable(distanceMeters);
     if (drivers.length === 0) return 404;
-    return drivers;
+    const driversList = drivers.map((driver) => ({
+      id: driver.driverId,
+      name: driver.name,
+      description: driver.description,
+      vehicle: driver.vehicle,
+      review: {
+        rating: driver.rating,
+        comments: driver.comment,
+      },
+      value: (distanceMeters / 1000) * driver.fare,
+    }));
+
+    const response = {
+      origin,
+      destination,
+      distance: distanceMeters / 1000,
+      duration,
+      options: driversList,
+      routeResponse: route,
+    };
+
+    return response;
   } catch (error: any) {
     return { message: (error as Error).message };
   }

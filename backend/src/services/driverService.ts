@@ -3,7 +3,6 @@ import { Op } from "sequelize";
 
 export const showDriversAvailable = async (meters: number) => {
   const metersToKm = meters / 1000;
-  console.log(metersToKm);
   const drivers = await Driver.findAll({
     where: {
       min_km: { [Op.lte]: metersToKm },
