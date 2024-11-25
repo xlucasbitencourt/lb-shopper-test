@@ -26,7 +26,7 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false
       },
-      avaliation: {
+      comment: {
         type: Sequelize.STRING,
         allowNull: false
       },
