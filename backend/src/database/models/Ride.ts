@@ -5,14 +5,16 @@ class Ride extends Model {
   declare rideId: number;
   declare customerId: number;
   declare driverId: number;
-  declare startLat: number;
-  declare startLng: number;
-  declare endLat: number;
-  declare endLng: number;
+  declare origin: string;
+  declare destination: string;
   declare distance: number;
   declare duration: number;
   declare value: number;
   declare date: Date;
+  declare driver: {
+    driverId: number;
+    name: string;
+  }
 }
 
 Ride.init({
@@ -60,7 +62,7 @@ Ride.init({
   underscored: true
 });
 
-Ride.belongsTo(db.models.Customer, { foreignKey: 'customerId' });
-Ride.belongsTo(db.models.Driver, { foreignKey: 'driverId' });
+Ride.belongsTo(db.models.Customer, { foreignKey: 'customerId', as: 'customer' });
+Ride.belongsTo(db.models.Driver, { foreignKey: 'driverId', as: 'driver' });
 
 export default Ride;

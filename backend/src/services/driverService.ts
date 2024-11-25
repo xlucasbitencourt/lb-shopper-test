@@ -22,3 +22,8 @@ export const getDriverByIdAndName = async (id: number, name: string) => {
 
   return driver;
 };
+
+export const getDriverById = async (id: number) => {
+  const driver = await Driver.findByPk(id);
+  return driver;
+}

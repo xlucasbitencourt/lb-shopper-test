@@ -1,6 +1,11 @@
 import { api } from "./axios";
-import { showDriversAvailable, getDriverByIdAndName } from "./driverService";
+import {
+  showDriversAvailable,
+  getDriverByIdAndName,
+  getDriverById,
+} from "./driverService";
 import Ride from "../database/models/Ride";
+import Driver from "../database/models/Driver";
 
 type Places = {
   origin: string;
@@ -98,6 +103,63 @@ export const confirmRide = async (ride: RideType) => {
       date: new Date().toISOString(),
     });
     return { success: true };
+  } catch (error: any) {
+    return { message: (error as Error).message };
+  }
+};
+
+export const showRides = async (customerId: number, driverId?: number) => {
+  try {
+    if (driverId) {
+      const driver = await getDriverById(driverId);
+      if (!driver) return 400;
+      const rides = await Ride.findAll({
+        where: { customerId, driverId },
+        include: [{ model: Driver, as: "driver" }],
+      });
+      if (rides.length === 0) return 404;
+      const ridesList = rides.map((ride) => ({
+        id: ride.rideId,
+        date: ride.date,
+        origin: ride.origin,
+        destination: ride.destination,
+        distance: Number(ride.distance),
+        duration: ride.duration,
+        driver: {
+          id: ride.driver.driverId,
+          name: ride.driver.name,
+        },
+        value: Number(ride.value),
+      }));
+      const response = {
+        customer_id: customerId,
+        rides: ridesList,
+      };
+      return response;
+    }
+    const rides = await Ride.findAll({
+      where: { customerId },
+      include: [{ model: Driver, as: "driver" }],
+    });
+    if (rides.length === 0) return 404;
+    const ridesList = rides.map((ride) => ({
+      id: ride.rideId,
+      date: ride.date,
+      origin: ride.origin,
+      destination: ride.destination,
+      distance: Number(ride.distance),
+      duration: ride.duration,
+      driver: {
+        id: ride.driver.driverId,
+        name: ride.driver.name,
+      },
+      value: Number(ride.value),
+    }));
+    const response = {
+      customer_id: customerId.toString(),
+      rides: ridesList,
+    };
+    return response;
   } catch (error: any) {
     return { message: (error as Error).message };
   }

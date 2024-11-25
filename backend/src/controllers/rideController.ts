@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { showById } from "../services/customerService";
-import { getEstimateDrivers, confirmRide } from "../services/rideService";
+import { getEstimateDrivers, confirmRide, showRides } from "../services/rideService";
 
 export const estimateRide = async (req: Request, res: Response): Promise<any> => {
   const { origin, destination, customer_id } = req.body;
@@ -100,6 +100,42 @@ export const confirmRideController = async (
       });
     }
     return res.status(200).json(ride);
+  } catch (error: any) {
+    res.status(500).json({ message: (error as Error).message });
+  }
+};
+
+export const getRides = async (req: Request, res: Response): Promise<any> => {
+  const { customer_id } = req.params;
+  const { driver_id } = req.query;
+  if (!customer_id) {
+    return res.status(400).json({
+      error_code: "INVALID_DATA",
+      error_description: "O campo customer_id deve ser preenchido.",
+    });
+  }
+  const customer = await showById(Number(customer_id));
+  if (!customer) {
+    return res.status(400).json({
+      error_code: "INVALID_DATA",
+      error_description: "Cliente não encontrado.",
+    });
+  }
+  try {
+    const rides = await showRides(Number(customer_id), Number(driver_id));
+    if (rides === 400) {
+      return res.status(400).json({
+        error_code: "INVALID_DRIVER",
+        error_description: "Motorista invalido ",
+      });
+    }
+    if (rides === 404) {
+      return res.status(404).json({
+        error_code: "NO_RIDES_FOUND",
+        error_description: "Nenhum registro encontrado",
+      });
+    }
+    return res.status(200).json(rides);
   } catch (error: any) {
     res.status(500).json({ message: (error as Error).message });
   }
