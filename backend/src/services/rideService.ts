@@ -1,4 +1,5 @@
 import { api } from "./axios";
+import { showDriversAvailable } from "./driverService";
 
 export const getEstimateFromGoogle = async (places: {
   origin: string;
@@ -24,7 +25,10 @@ export const getEstimateDrivers = async (places: {
 }) => {
   try {
     const route = await getEstimateFromGoogle(places);
-    return route;
+    const { distanceMeters, duration } = route.routes[0];
+    const drivers = await showDriversAvailable(distanceMeters);
+    if (drivers.length === 0) return 404;
+    return drivers;
   } catch (error: any) {
     return { message: (error as Error).message };
   }

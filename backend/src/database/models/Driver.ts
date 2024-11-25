@@ -7,7 +7,7 @@ class Driver extends Model {
   declare desciption: string;
   declare vehicle: string;
   declare rating: number;
-  declare avaliation: string;
+  declare comment: string;
   declare fare: number;
   declare minKm: number;
 }
@@ -34,7 +34,7 @@ Driver.init({
     type: sequelize.FLOAT,
     allowNull: false
   },
-  avaliation: {
+  comment: {
     type: sequelize.STRING,
     allowNull: false
   },
