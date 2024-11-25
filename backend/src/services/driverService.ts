@@ -11,3 +11,14 @@ export const showDriversAvailable = async (meters: number) => {
   
   return drivers;
 };
+
+export const getDriverByIdAndName = async (id: number, name: string) => {
+  const driver = await Driver.findOne({
+    where: {
+      driver_id: id,
+      name,
+    },
+  });
+
+  return driver;
+};

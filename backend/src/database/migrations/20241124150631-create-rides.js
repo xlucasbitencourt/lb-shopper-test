@@ -30,28 +30,20 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      start_lat: {
-        type: Sequelize.DECIMAL(10, 7),
+      origin: {
+        type: Sequelize.STRING,
         allowNull: false
       },
-      start_lng: {
-        type: Sequelize.DECIMAL(10, 7),
-        allowNull: false
-      },
-      end_lat: {
-        type: Sequelize.DECIMAL(10, 7),
-        allowNull: false
-      },
-      end_lng: {
-        type: Sequelize.DECIMAL(10, 7),
+      destination: {
+        type: Sequelize.STRING,
         allowNull: false
       },
       distance: {
-        type: Sequelize.DECIMAL(6, 2),
+        type: Sequelize.DECIMAL(10, 3),
         allowNull: false
       },
       duration: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
         allowNull: false
       },
       value: {

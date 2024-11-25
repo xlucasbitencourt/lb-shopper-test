@@ -29,20 +29,12 @@ Ride.init({
     type: sequelize.INTEGER,
     allowNull: false
   },
-  startLat: {
-    type: sequelize.FLOAT,
+  origin: {
+    type: sequelize.STRING,
     allowNull: false
   },
-  startLng: {
-    type: sequelize.FLOAT,
-    allowNull: false
-  },
-  endLat: {
-    type: sequelize.FLOAT,
-    allowNull: false
-  },
-  endLng: {
-    type: sequelize.FLOAT,
+  destination: {
+    type: sequelize.STRING,
     allowNull: false
   },
   distance: {
@@ -50,7 +42,7 @@ Ride.init({
     allowNull: false
   },
   duration: {
-    type: sequelize.INTEGER,
+    type: sequelize.STRING,
     allowNull: false
   },
   value: {
