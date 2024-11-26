@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { api } from "../services/axios";
 import Container from "react-bootstrap/Container";
@@ -7,52 +7,30 @@ import Button from "react-bootstrap/Button";
 import { ICustomer, IEstimatedRide, Option } from "../types";
 import axios from "axios";
 import { toast } from "react-toastify";
-import ListGroup from "react-bootstrap/ListGroup";
-import Badge from "react-bootstrap/Badge";
-import { formatMoney } from "../utils";
 import { MapWithRoute } from "../components/MapWithRoute";
+import { useCustomersAndDrivers } from "../hooks/useCustomersAndDrivers";
+import { DriversList } from "../components/DriversList";
+
+const INITIAL_RIDE_DATA = {
+  customer_id: "0",
+  origin: "",
+  destination: "",
+};
 
 export default function Home() {
-  const [customers, setCustomers] = useState<ICustomer[]>([]);
-  const [rideData, setRideData] = useState({
-    customer_id: "0",
-    origin: "",
-    destination: "",
-  });
-  const [rideChosen, setRideChosen] = useState({
-    customer_id: "0",
-    origin: "",
-    destination: "",
-  });
+  const { customers } = useCustomersAndDrivers({ page: "Home" });
+  const [rideData, setRideData] = useState(INITIAL_RIDE_DATA);
+  const [rideChosen, setRideChosen] = useState(INITIAL_RIDE_DATA);
   const [loading, setLoading] = useState(false);
   const [estimatedRide, setEstimatedRide] = useState<IEstimatedRide>();
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      const response = await api.get("/customer");
-      setCustomers(response.data);
-    };
-
-    fetchCustomers();
-  }, []);
-
-  const handleDisableButton = () => {
-    if (loading) {
-      return true;
-    }
-
-    if (
-      rideData.customer_id === "0" ||
-      rideData.origin.length < 3 ||
-      rideData.destination.length < 3
-    ) {
-      return true;
-    }
-
-    return false;
-  };
+  const handleDisableButton = () =>
+    loading ||
+    rideData.customer_id === "0" ||
+    rideData.origin.length < 3 ||
+    rideData.destination.length < 3;
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -98,11 +76,7 @@ export default function Home() {
       };
       await api.patch("/ride/confirm", body);
       setEstimatedRide(undefined);
-      setRideData({
-        customer_id: "0",
-        origin: "",
-        destination: "",
-      });
+      setRideData(INITIAL_RIDE_DATA);
       toast.success("Viagem solicitada com sucesso");
       navigate("/rides");
     } catch (error) {
@@ -163,52 +137,20 @@ export default function Home() {
           {estimatedRide ? "Recalcular viagem" : "Calcular viagem"}
         </Button>
       </Form>
-      {estimatedRide && !loading && (
+      {estimatedRide && (
         <div>
-          <div className="m-3">
-            <MapWithRoute
-              origin={{
-                lat: estimatedRide.origin.latitude,
-                lng: estimatedRide.origin.longitude,
-              }}
-              destination={{
-                lat: estimatedRide.destination.latitude,
-                lng: estimatedRide.destination.longitude,
-              }}
-            />
-          </div>
-
-          <h1>Motoristas disponíveis: </h1>
-          <ListGroup as="ol" numbered>
-            {estimatedRide &&
-              estimatedRide.options.map((driver: Option) => (
-                <ListGroup.Item as="li" key={driver.id}>
-                  <div className="d-flex justify-content-between align-items-start">
-                    <div className="ms-2 me-auto p-2">
-                      <p className="fw-bold">{driver.name}</p>
-                      <p>{driver.description}</p>
-                      <p>Carro: {driver.vehicle}</p>
-                    </div>
-                    <div className="p-2 d-flex flex-column justify-content-between align-items-end">
-                      <Badge bg="primary" pill>
-                        {driver.review.rating}/5
-                      </Badge>
-                      <p>{driver.review.comments}</p>
-                    </div>
-                  </div>
-                  <h5>Valor: {formatMoney(driver.value)}</h5>
-
-                  <Button
-                    onClick={() => chooseDriver(driver)}
-                    variant="success"
-                    className="w-100"
-                    size="lg"
-                  >
-                    Escolher
-                  </Button>
-                </ListGroup.Item>
-              ))}
-          </ListGroup>
+          <MapWithRoute
+            origin={{
+              lat: estimatedRide.origin.latitude,
+              lng: estimatedRide.origin.longitude,
+            }}
+            destination={{
+              lat: estimatedRide.destination.latitude,
+              lng: estimatedRide.destination.longitude,
+            }}
+          />
+          <h2>Motoristas disponíveis:</h2>
+          <DriversList drivers={estimatedRide.options} chooseDriver={chooseDriver} />
         </div>
       )}
     </Container>
