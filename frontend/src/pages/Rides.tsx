@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { api } from "../services/axios";
 import Container from "react-bootstrap/Container";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
+import Accordion from "react-bootstrap/Accordion";
 import { ICustomer, IDriver, IRideResponse } from "../types";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { formatMoney } from "../utils";
+import { formatDate, formatMoney, secondsToMinutesToHours } from "../utils";
 
 export default function Rides() {
   const [customers, setCustomers] = useState<ICustomer[]>([]);
@@ -17,7 +19,7 @@ export default function Rides() {
   });
   const [rides, setRides] = useState<IRideResponse>();
 
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCustomersAndDrivers = async () => {
@@ -43,7 +45,6 @@ export default function Rides() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      setLoading(true);
       setRides(undefined);
       const pathQuery =
         rideData.driver_id === "0"
@@ -58,13 +59,12 @@ export default function Rides() {
       } else {
         toast.error("Erro ao buscar viagens");
       }
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <Container>
+    <Container className="p-1">
+      <Button onClick={() => navigate("/")} className="w-100">Voltar para solicitação de viagem</Button>
       <h1>Histórico de viagens</h1>
       <Form onSubmit={handleSubmit}>
         <Form.Group className="mb-3">
@@ -103,6 +103,40 @@ export default function Rides() {
           Exibir viagens
         </Button>
       </Form>
+      {rides && (
+        <Accordion className="mt-4">
+          {rides?.rides.map((ride, index) => (
+            <Accordion.Item key={ride.id} eventKey={index.toString()}>
+              <Accordion.Header>
+                {formatDate(ride.date)} - {formatMoney(ride.value)}
+              </Accordion.Header>
+              <Accordion.Body>
+                <p>
+                  <strong>Data:</strong> {formatDate(ride.date)}
+                </p>
+                <p>
+                  <strong>Motorista:</strong> {ride.driver.name}
+                </p>
+                <p>
+                  <strong>Origem:</strong> {ride.origin}
+                </p>
+                <p>
+                  <strong>Destino:</strong> {ride.destination}
+                </p>
+                <p>
+                  <strong>Distância:</strong> {ride.distance} km
+                </p>
+                <p>
+                  <strong>Duração:</strong> {secondsToMinutesToHours(ride.duration)}
+                </p>
+                <p>
+                  <strong>Valor:</strong> {formatMoney(ride.value)}
+                </p>
+              </Accordion.Body>
+            </Accordion.Item>
+          ))}
+        </Accordion>
+      )}
     </Container>
   );
 }

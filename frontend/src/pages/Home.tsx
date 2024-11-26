@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { api } from "../services/axios";
 import Container from "react-bootstrap/Container";
 import Form from "react-bootstrap/Form";
@@ -24,6 +25,8 @@ export default function Home() {
   });
   const [loading, setLoading] = useState(false);
   const [estimatedRide, setEstimatedRide] = useState<IEstimatedRide>();
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -93,8 +96,7 @@ export default function Home() {
         },
         value: driver.value,
       };
-      const response = await api.patch("/ride/confirm", body);
-      console.log(response);
+      await api.patch("/ride/confirm", body);
       setEstimatedRide(undefined);
       setRideData({
         customer_id: "0",
@@ -102,6 +104,7 @@ export default function Home() {
         destination: "",
       });
       toast.success("Viagem solicitada com sucesso");
+      navigate("/rides");
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         toast.error(error.response.data.error_description);
@@ -113,6 +116,9 @@ export default function Home() {
 
   return (
     <Container>
+      <Button onClick={() => navigate("/rides")} className="w-100">
+        Ir para viagens
+      </Button>
       <h1>Solicite sua viagem</h1>
       <Form onSubmit={handleSubmit}>
         <Form.Group className="mb-3">
