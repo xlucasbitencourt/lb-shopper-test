@@ -171,6 +171,7 @@ export const showRides = async (customerId: number, driverId?: number) => {
     const rides = await Ride.findAll({
       where: whereCondition,
       include: [{ model: Driver, as: "driver" }],
+      order: [["date", "DESC"]],
     });
 
     if (!rides.length)
