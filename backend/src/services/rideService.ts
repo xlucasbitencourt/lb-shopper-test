@@ -80,7 +80,7 @@ export const getEstimateDrivers = async (places: Places) => {
         status: 400,
         response: {
           error_code: "INVALID_DATA",
-          error_description: "Os dados fornecidos no corpo da requisioção são inválidos",
+          error_description: "Os dados fornecidos no corpo da requisição são inválidos",
         },
       };
 

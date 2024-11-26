@@ -5,6 +5,7 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import { ICustomer } from "../types";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 export default function Home() {
   const [customers, setCustomers] = useState<ICustomer[]>([]);
@@ -14,20 +15,16 @@ export default function Home() {
     destination: "",
   });
   const [loading, setLoading] = useState(false);
+  const [estimatedRide, setEstimatedRide] = useState();
 
   useEffect(() => {
     const fetchCustomers = async () => {
       const response = await api.get("/customer");
       setCustomers(response.data);
-      console.log(response.data);
     };
 
     fetchCustomers();
   }, []);
-
-  useEffect(() => {
-    console.log(rideData);
-  }, [rideData]);
 
   const handleDisableButton = () => {
     if (loading) {
@@ -61,12 +58,13 @@ export default function Home() {
     try {
       setLoading(true);
       const response = await api.post("/ride/estimate", rideData);
+      setEstimatedRide(response.data);
       console.log(response);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        console.log(error.response.data);
+        toast.error(error.response.data.error_description);
       } else {
-        console.log(error);
+        toast.error("Erro ao calcular viagem");
       }
     } finally {
       setLoading(false);
