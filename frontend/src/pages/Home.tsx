@@ -3,9 +3,12 @@ import { api } from "../services/axios";
 import Container from "react-bootstrap/Container";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
-import { ICustomer } from "../types";
+import { ICustomer, IEstimatedRide, Option } from "../types";
 import axios from "axios";
 import { toast } from "react-toastify";
+import ListGroup from "react-bootstrap/ListGroup";
+import Badge from "react-bootstrap/Badge";
+import { formatMoney } from "../utils";
 
 export default function Home() {
   const [customers, setCustomers] = useState<ICustomer[]>([]);
@@ -15,7 +18,7 @@ export default function Home() {
     destination: "",
   });
   const [loading, setLoading] = useState(false);
-  const [estimatedRide, setEstimatedRide] = useState();
+  const [estimatedRide, setEstimatedRide] = useState<IEstimatedRide>();
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -57,8 +60,9 @@ export default function Home() {
     console.log(rideData);
     try {
       setLoading(true);
+      setEstimatedRide(undefined);
       const response = await api.post("/ride/estimate", rideData);
-      setEstimatedRide(response.data);
+      setEstimatedRide({ ...response.data, rideData });
       console.log(response);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -114,9 +118,39 @@ export default function Home() {
           variant={handleDisableButton() ? "secondary" : "primary"}
           type="submit"
         >
-          Calcular viagem
+          {estimatedRide ? "Recalcular viagem" : "Calcular viagem"}
         </Button>
       </Form>
+      {estimatedRide && (
+        <div>
+          <h1>Motoristas disponíveis: </h1>
+          <ListGroup as="ol" numbered>
+            {estimatedRide &&
+              estimatedRide.options.map((driver: Option) => (
+                <ListGroup.Item as="li">
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div className="ms-2 me-auto p-2">
+                      <p className="fw-bold">{driver.name}</p>
+                      <p>{driver.description}</p>
+                      <p>Carro: {driver.vehicle}</p>
+                    </div>
+                    <div className="p-2 d-flex flex-column justify-content-between align-items-end">
+                      <Badge bg="primary" pill>
+                        {driver.review.rating}/5
+                      </Badge>
+                      <p>{driver.review.comments}</p>
+                    </div>
+                  </div>
+                  <h5>Valor: {formatMoney(driver.value)}</h5>
+
+                  <Button variant="success" className="w-100" size="lg">
+                    Escolher
+                  </Button>
+                </ListGroup.Item>
+              ))}
+          </ListGroup>
+        </div>
+      )}
     </Container>
   );
 }
