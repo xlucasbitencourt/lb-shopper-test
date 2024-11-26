@@ -52,7 +52,6 @@ export default function Rides() {
           : `${rideData.customer_id}?driver_id=${rideData.driver_id}`;
       const response = await api.get("/ride/" + pathQuery);
       setRides(response.data);
-      console.log(response);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         toast.error(error.response.data.error_description);
@@ -64,7 +63,9 @@ export default function Rides() {
 
   return (
     <Container className="p-1">
-      <Button onClick={() => navigate("/")} className="w-100">Voltar para solicitação de viagem</Button>
+      <Button variant="info" onClick={() => navigate("/")} className="w-100">
+        Voltar para solicitação de viagem
+      </Button>
       <h1>Histórico de viagens</h1>
       <Form onSubmit={handleSubmit}>
         <Form.Group className="mb-3">
@@ -124,7 +125,8 @@ export default function Rides() {
                   <strong>Destino:</strong> {ride.destination}
                 </p>
                 <p>
-                  <strong>Distância:</strong> {ride.distance} km
+                  <strong>Distância:</strong> {ride.distance.toString().replace(".", ",")}{" "}
+                  km
                 </p>
                 <p>
                   <strong>Duração:</strong> {secondsToMinutesToHours(ride.duration)}

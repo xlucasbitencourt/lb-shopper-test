@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import ListGroup from "react-bootstrap/ListGroup";
 import Badge from "react-bootstrap/Badge";
 import { formatMoney } from "../utils";
+import { MapWithRoute } from "../components/MapWithRoute";
 
 export default function Home() {
   const [customers, setCustomers] = useState<ICustomer[]>([]);
@@ -65,7 +66,6 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(rideData);
     try {
       setLoading(true);
       setEstimatedRide(undefined);
@@ -116,7 +116,7 @@ export default function Home() {
 
   return (
     <Container>
-      <Button onClick={() => navigate("/rides")} className="w-100">
+      <Button onClick={() => navigate("/rides")} variant="info" className="w-100">
         Ir para viagens
       </Button>
       <h1>Solicite sua viagem</h1>
@@ -165,6 +165,19 @@ export default function Home() {
       </Form>
       {estimatedRide && !loading && (
         <div>
+          <div className="m-3">
+            <MapWithRoute
+              origin={{
+                lat: estimatedRide.origin.latitude,
+                lng: estimatedRide.origin.longitude,
+              }}
+              destination={{
+                lat: estimatedRide.destination.latitude,
+                lng: estimatedRide.destination.longitude,
+              }}
+            />
+          </div>
+
           <h1>Motoristas disponíveis: </h1>
           <ListGroup as="ol" numbered>
             {estimatedRide &&
