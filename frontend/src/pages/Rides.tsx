@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { api } from "../services/axios";
 import Container from "react-bootstrap/Container";
@@ -8,11 +8,11 @@ import Accordion from "react-bootstrap/Accordion";
 import { ICustomer, IDriver, IRideResponse } from "../types";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useCustomersAndDrivers } from "../hooks/useCustomersAndDrivers";
 import { formatDate, formatMoney, secondsToMinutesToHours } from "../utils";
 
 export default function Rides() {
-  const [customers, setCustomers] = useState<ICustomer[]>([]);
-  const [drivers, setDrivers] = useState<IDriver[]>([]);
+  const { customers, drivers } = useCustomersAndDrivers({ page: "Rides" });
   const [rideData, setRideData] = useState({
     customer_id: "0",
     driver_id: "0",
@@ -20,17 +20,6 @@ export default function Rides() {
   const [rides, setRides] = useState<IRideResponse>();
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchCustomersAndDrivers = async () => {
-      const response = await api.get("/customer");
-      setCustomers(response.data);
-      const responseDrivers = await api.get("/driver");
-      setDrivers(responseDrivers.data);
-    };
-
-    fetchCustomersAndDrivers();
-  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>

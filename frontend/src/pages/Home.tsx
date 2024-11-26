@@ -138,7 +138,7 @@ export default function Home() {
         </Button>
       </Form>
       {estimatedRide && (
-        <div>
+        <div className="m-4">
           <MapWithRoute
             origin={{
               lat: estimatedRide.origin.latitude,
