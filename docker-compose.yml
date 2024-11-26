@@ -18,6 +18,17 @@ services:
     depends_on:
       - db
 
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/frontend
+    container_name: lb-rides-frontend
+    restart: always
+    depends_on:
+      - backend
+
   db:
     image: mysql:5.7
     ports:
