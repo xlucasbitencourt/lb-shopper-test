@@ -2,52 +2,73 @@ import { Request, Response } from "express";
 import { showById } from "../services/customerService";
 import { getEstimateDrivers, confirmRide, showRides } from "../services/rideService";
 
-export const estimateRide = async (req: Request, res: Response): Promise<any> => {
-  const { origin, destination, customer_id } = req.body;
-  try {
-    if (!origin || !destination || !customer_id) {
-      return res.status(400).json({
-        error_code: "INVALID_DATA",
-        error_description:
-          "Os campos origin, destination e customer_id devem ser preenchidos.",
-      });
+const validateFields = (
+  fields: Record<string, any>
+): { isValid: boolean; message?: string } => {
+  for (const [key, value] of Object.entries(fields)) {
+    if (!value) {
+      return { isValid: false, message: `O campo ${key} deve ser preenchido.` };
     }
-    if (typeof origin !== "string" || typeof destination !== "string") {
-      return res.status(400).json({
-        error_code: "INVALID_DATA",
-        error_description: "Os campos origin e destination devem ser do tipo string.",
-      });
-    }
-    if (origin === destination) {
-      return res.status(400).json({
-        error_code: "INVALID_DATA",
-        error_description: "Os campos origin e destination não podem ser iguais.",
-      });
-    }
+  }
+  return { isValid: true };
+};
 
+const validateStringFields = (
+  fields: Record<string, any>
+): { isValid: boolean; message?: string } => {
+  for (const [key, value] of Object.entries(fields)) {
+    if (typeof value !== "string") {
+      return { isValid: false, message: `O campo ${key} deve ser do tipo string.` };
+    }
+  }
+  return { isValid: true };
+};
+
+const sendErrorResponse = (
+  res: Response,
+  status: number,
+  errorCode: string,
+  description: string
+) => {
+  return res
+    .status(status)
+    .json({ error_code: errorCode, error_description: description });
+};
+
+export const estimateRide = async (req: Request, res: Response): Promise<void> => {
+  const { origin, destination, customer_id } = req.body;
+
+  const fieldValidation = validateFields({ origin, destination, customer_id });
+  if (!fieldValidation.isValid) {
+    sendErrorResponse(res, 400, "INVALID_DATA", fieldValidation.message!);
+    return;
+  }
+
+  const typeValidation = validateStringFields({ origin, destination });
+  if (!typeValidation.isValid) {
+    sendErrorResponse(res, 400, "INVALID_DATA", typeValidation.message!);
+    return;
+  }
+
+  if (origin === destination) {
+    sendErrorResponse(
+      res,
+      400,
+      "INVALID_DATA",
+      "Os campos origin e destination não podem ser iguais."
+    );
+    return;
+  }
+
+  try {
     const customer = await showById(customer_id);
     if (!customer) {
-      return res.status(400).json({
-        error_code: "INVALID_DATA",
-        error_description: "Cliente não encontrado.",
-      });
+      sendErrorResponse(res, 400, "INVALID_DATA", "Cliente não encontrado.");
+      return;
     }
 
     const route = await getEstimateDrivers({ origin, destination });
-    if (route === 404) {
-      return res.status(404).json({
-        error_code: "DRIVERS_NOT_FOUND",
-        error_description: "Não há motoristas disponíveis para essa rota.",
-      });
-    }
-    if (route === 400) {
-      return res.status(400).json({
-        error_code: "INVALID_DATA",
-        error_description:
-          "Não foi possível calcular a rota com os endereços informados.",
-      });
-    }
-    return res.status(200).json(route);
+    res.status(route.status).json(route.response);
   } catch (error: any) {
     res.status(500).json({ message: (error as Error).message });
   }
@@ -56,86 +77,80 @@ export const estimateRide = async (req: Request, res: Response): Promise<any> =>
 export const confirmRideController = async (
   req: Request,
   res: Response
-): Promise<any> => {
-  const { customer_id, driver, origin, destination } = req.body;
-  const customer = await showById(customer_id);
-  if (!customer) {
-    return res.status(400).json({
-      error_code: "INVALID_DATA",
-      error_description: "Cliente não encontrado.",
-    });
+): Promise<void> => {
+  const { customer_id, driver, origin, destination, distance, duration, value } =
+    req.body;
+
+  const fieldValidation = validateFields({
+    customer_id,
+    driver,
+    origin,
+    destination,
+    distance,
+    duration,
+    value,
+  });
+  if (!fieldValidation.isValid) {
+    sendErrorResponse(res, 400, "INVALID_DATA", fieldValidation.message!);
+    return;
   }
-  if (!driver) {
-    return res.status(400).json({
-      error_code: "INVALID_DATA",
-      error_description: "O campo driver deve ser preenchido.",
-    });
+
+  if (!driver.id || !driver.name) {
+    sendErrorResponse(
+      res,
+      400,
+      "INVALID_DATA",
+      "Os campos driver.id e driver.name devem ser preenchidos."
+    );
+    return;
   }
-  const { id, name } = driver;
+
+  if (origin === destination) {
+    sendErrorResponse(
+      res,
+      400,
+      "INVALID_DATA",
+      "Os campos origin e destination não podem ser iguais."
+    );
+    return;
+  }
+
   try {
-    if (!customer_id || !id || !origin || !destination || !name) {
-      return res.status(400).json({
-        error_code: "INVALID_DATA",
-        error_description:
-          "Os campos customer_id, driver.id, driver.name, origin e destination devem ser preenchidos.",
-      });
+    const customer = await showById(customer_id);
+    if (!customer) {
+      sendErrorResponse(res, 400, "INVALID_DATA", "Cliente não encontrado.");
+      return;
     }
-    if (origin === destination) {
-      return res.status(400).json({
-        error_code: "INVALID_DATA",
-        error_description: "Os campos origin e destination não podem ser iguais.",
-      });
-    }
+
     const ride = await confirmRide(req.body);
-    if (ride === 404) {
-      return res.status(404).json({
-        error_code: "DRIVER_NOT_FOUND",
-        error_description: "Motorista não encontrado.",
-      });
-    }
-    if (ride === 406) {
-      return res.status(400).json({
-        error_code: "INVALID_DISTANCE",
-        error_description: "Quilometragem inválida para o motorista",
-      });
-    }
-    return res.status(200).json(ride);
+    res.status(ride.status).json(ride.response);
   } catch (error: any) {
     res.status(500).json({ message: (error as Error).message });
   }
 };
 
-export const getRides = async (req: Request, res: Response): Promise<any> => {
+export const getRides = async (req: Request, res: Response): Promise<void> => {
   const { customer_id } = req.params;
   const { driver_id } = req.query;
-  if (!customer_id) {
-    return res.status(400).json({
-      error_code: "INVALID_DATA",
-      error_description: "O campo customer_id deve ser preenchido.",
-    });
+
+  const fieldValidation = validateFields({ customer_id });
+  if (!fieldValidation.isValid) {
+    sendErrorResponse(res, 400, "INVALID_DATA", fieldValidation.message!);
+    return;
   }
-  const customer = await showById(Number(customer_id));
-  if (!customer) {
-    return res.status(400).json({
-      error_code: "INVALID_DATA",
-      error_description: "Cliente não encontrado.",
-    });
-  }
+
   try {
-    const rides = await showRides(Number(customer_id), Number(driver_id));
-    if (rides === 400) {
-      return res.status(400).json({
-        error_code: "INVALID_DRIVER",
-        error_description: "Motorista invalido ",
-      });
+    const customer = await showById(Number(customer_id));
+    if (!customer) {
+      sendErrorResponse(res, 400, "INVALID_DATA", "Cliente não encontrado.");
+      return;
     }
-    if (rides === 404) {
-      return res.status(404).json({
-        error_code: "NO_RIDES_FOUND",
-        error_description: "Nenhum registro encontrado",
-      });
-    }
-    return res.status(200).json(rides);
+
+    const rides = await showRides(
+      Number(customer_id),
+      driver_id ? Number(driver_id) : undefined
+    );
+    res.status(rides.status).json(rides.response);
   } catch (error: any) {
     res.status(500).json({ message: (error as Error).message });
   }
