@@ -17,6 +17,11 @@ export default function Home() {
     origin: "",
     destination: "",
   });
+  const [rideChosen, setRideChosen] = useState({
+    customer_id: "0",
+    origin: "",
+    destination: "",
+  });
   const [loading, setLoading] = useState(false);
   const [estimatedRide, setEstimatedRide] = useState<IEstimatedRide>();
 
@@ -63,7 +68,7 @@ export default function Home() {
       setEstimatedRide(undefined);
       const response = await api.post("/ride/estimate", rideData);
       setEstimatedRide({ ...response.data, rideData });
-      console.log(response);
+      setRideChosen(rideData);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         toast.error(error.response.data.error_description);
@@ -72,6 +77,37 @@ export default function Home() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const chooseDriver = async (driver: Option) => {
+    if (!estimatedRide) return toast.error("Calcule a rota novamente");
+    try {
+      const body = {
+        ...rideChosen,
+        distance: estimatedRide?.distance,
+        duration: estimatedRide?.duration,
+        driver: {
+          id: driver.id,
+          name: driver.name,
+        },
+        value: driver.value,
+      };
+      const response = await api.patch("/ride/confirm", body);
+      console.log(response);
+      setEstimatedRide(undefined);
+      setRideData({
+        customer_id: "0",
+        origin: "",
+        destination: "",
+      });
+      toast.success("Viagem solicitada com sucesso");
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        toast.error(error.response.data.error_description);
+      } else {
+        toast.error("Erro ao solicitar viagem");
+      }
     }
   };
 
@@ -121,13 +157,13 @@ export default function Home() {
           {estimatedRide ? "Recalcular viagem" : "Calcular viagem"}
         </Button>
       </Form>
-      {estimatedRide && (
+      {estimatedRide && !loading && (
         <div>
           <h1>Motoristas disponíveis: </h1>
           <ListGroup as="ol" numbered>
             {estimatedRide &&
               estimatedRide.options.map((driver: Option) => (
-                <ListGroup.Item as="li">
+                <ListGroup.Item as="li" key={driver.id}>
                   <div className="d-flex justify-content-between align-items-start">
                     <div className="ms-2 me-auto p-2">
                       <p className="fw-bold">{driver.name}</p>
@@ -143,7 +179,12 @@ export default function Home() {
                   </div>
                   <h5>Valor: {formatMoney(driver.value)}</h5>
 
-                  <Button variant="success" className="w-100" size="lg">
+                  <Button
+                    onClick={() => chooseDriver(driver)}
+                    variant="success"
+                    className="w-100"
+                    size="lg"
+                  >
                     Escolher
                   </Button>
                 </ListGroup.Item>
