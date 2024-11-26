@@ -3,6 +3,38 @@ export interface ICustomer {
   name: string;
 }
 
+export interface IDriver {
+  driverId: number;
+  name: string;
+  description: string;
+  vehicle: string;
+  rating: number;
+  comment: string;
+  fare: string;
+  minKm: number;
+}
+
+export interface IRideResponse {
+  customer_id: string;
+  rides: IRide[];
+}
+
+export interface IRide {
+  id: number;
+  date: string;
+  origin: string;
+  destination: string;
+  distance: number;
+  duration: string;
+  driver: Driver;
+  value: number;
+}
+
+export interface Driver {
+  id: number;
+  name: string;
+}
+
 export interface IEstimatedRide {
   origin: Origin;
   destination: Destination;
